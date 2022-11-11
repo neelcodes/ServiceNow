@@ -1,0 +1,3 @@
+"export ORACLE_SID=" + $sid + ";export ORACLE_HOME=" + $ora_home_exe + ";$ORACLE_HOME/bin/sqlplus -s " + "$$username$$/'$$password$$'" + "<<EOF select BANNER from v\$version;exit;EOF"
+
+"export TNS_ADMIN=" + $ora_home_exe + "/network/admin;export ORACLE_HOME=" + $ora_home_exe + "; echo  \"select * from v\$version;\" |" + "\"" + $ora_home_exe + "/bin/sqlplus\" -l " + "$$username$$/'$$password$$'@" + $computer_system.primaryHostname + ":" + $tcp_port + "/" + $sid

@@ -1,0 +1,34 @@
+//sets the location of a slave switch to the same as its master.
+var grswitch = new GlideRecord("cmdb_ci_ip_switch");
+//query for stack masters that have a location
+grswitch.addEncodedQuery("stack_mode=Master^install_status=1^locationISNOTEMPTY");
+grswitch.query();
+var cnt = grswitch.getRowCount();
+gs.log("#######################masters found: " + cnt);
+while(grswitch.next()){
+    var location = grswitch.location;
+    //for each master find the Master::Stack rels (c8c685710b22130005d90d2835673aa8) where it is the parent
+    var gr = new GlideRecord("cmdb_rel_ci");
+    gr.addEncodedQuery("type=c8c685710b22130005d90d2835673aa8^parent="+ grswitch.sys_id);
+    gr.query();
+    while(gr.next()){        
+         gs.log("###################master: "+ grswitch.name + " slave: " + gr.child);
+         //child.sys_id is the switch that needs updating
+         var grs = new GlideRecord("cmdb_ci_ip_switch");
+         grs.addQuery("sys_id", gr.child);
+         grs.query();
+         while(grs.next()){
+            grs.location=location;
+            grs.update();
+            gs.log("updated "+grs.name+" with "+ location);
+         }
+    }
+}
+
+
+
+stack_mode=Master^install_status=1^u_organization_idISNOTEMPTY
+
+type=c8c685710b22130005d90d2835673aa8^parent=02a8b002374dd28039f9a9c2b3990ec8
+
+type=c8c685710b22130005d90d2835673aa8^parent.sys_id=02a8b002374dd28039f9a9c2b3990ec8
