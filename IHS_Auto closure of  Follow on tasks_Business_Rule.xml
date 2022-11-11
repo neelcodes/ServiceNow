@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2022-11-11 07:09:34">
+<sys_script action="INSERT_OR_UPDATE">
+<abort_action>false</abort_action>
+<access>package_private</access>
+<action_delete>false</action_delete>
+<action_insert>false</action_insert>
+<action_query>false</action_query>
+<action_update>true</action_update>
+<active>true</active>
+<add_message>false</add_message>
+<advanced>true</advanced>
+<change_fields>false</change_fields>
+<client_callable>false</client_callable>
+<collection>sc_req_item</collection>
+<condition/>
+<description/>
+<execute_function>false</execute_function>
+<filter_condition table="sc_req_item">stateCHANGESTO3^short_descriptionLIKE Automated_FOT^cat_item=569e278adb691c50f228f2713996197e^EQ<item goto="false" or="false" field="state" endquery="false" value="3" operator="CHANGESTO" newquery="false"/>
+<item goto="false" or="false" field="short_description" endquery="false" value=" Automated_FOT" operator="LIKE" newquery="false"/>
+<item goto="false" or="false" field="cat_item" endquery="false" value="569e278adb691c50f228f2713996197e" operator="=" newquery="false" display_table="sc_cat_item" display_value="SysOps and Windows Operations"/>
+<item goto="false" or="false" field="" endquery="true" value="" operator="=" newquery="false"/>
+</filter_condition>
+<is_rest>false</is_rest>
+<message><![CDATA[<p>auto closure running</p>]]></message>
+<name>Auto closure of  Follow on tasks</name>
+<order>1400</order>
+<priority>100</priority>
+<rest_method display_value=""/>
+<rest_method_text/>
+<rest_service display_value=""/>
+<rest_service_text/>
+<rest_variables/>
+<role_conditions/>
+<script><![CDATA[(function executeRule(current, previous /*null when async*/ ) {
+    var grM2M = new GlideRecord('u_m2m_tasks_follow_on_tasks'); //Get the related FOT detail 
+    grM2M.addEncodedQuery("u_task=" + current.sys_id + "^u_taskISNOTEMPTY");
+    grM2M.query();
+    if (grM2M.next()) {
+       
+		var fot = grM2M.u_follow_on_task.getRefRecord();
+
+        var grFOT = new GlideRecord('cert_follow_on_task'); //Get FOT details
+        grFOT.addEncodedQuery("sys_id=" + fot.sys_id + "^audit=69396cfc1b9e20900335db51cd4bcb8e^stateNOT IN3,4");
+        grFOT.query();
+        if (grFOT.next()) {
+            grFOT.state = 3; // Close the related FOT with work note updates
+            grFOT.active = false;
+            grFOT.work_notes = "The CPDS team has fixed the credentials issue and closed the remediation task " + grM2M.u_task.getDisplayValue() + ". So closing the FOT";
+            grFOT.update();
+        }
+    }
+
+})(current, previous);]]></script>
+<sys_class_name>sys_script</sys_class_name>
+<sys_created_by>neelagantan.sankaran</sys_created_by>
+<sys_created_on>2021-05-31 11:38:52</sys_created_on>
+<sys_customer_update>false</sys_customer_update>
+<sys_domain>global</sys_domain>
+<sys_id>6c955308872030d4bd737488cebb35e7</sys_id>
+<sys_mod_count>5</sys_mod_count>
+<sys_name>Auto closure of  Follow on tasks</sys_name>
+<sys_overrides display_value=""/>
+<sys_package display_value="Global" source="global">global</sys_package>
+<sys_policy/>
+<sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+<sys_scope display_value="Global">global</sys_scope>
+<sys_update_name>sys_script_6c955308872030d4bd737488cebb35e7</sys_update_name>
+<sys_updated_by>neelagantan.sankara</sys_updated_by>
+<sys_updated_on>2022-03-16 10:16:56</sys_updated_on>
+<template/>
+<when>after</when>
+</sys_script>
+</unload>

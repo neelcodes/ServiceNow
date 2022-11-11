@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2022-11-11 07:47:36">
+<cert_audit action="INSERT_OR_UPDATE">
+<active>true</active>
+<assign_to/>
+<assign_to_empty>Create Unassigned Task</assign_to_empty>
+<assign_to_group/>
+<assignment_type>Specific Group</assignment_type>
+<audit_type>scripted</audit_type>
+<business_calendar display_value=""/>
+<condition/>
+<conditional>false</conditional>
+<create_tasks>false</create_tasks>
+<entered_time/>
+<filter display_value="Vmware VMIs - 11">a41e11d587bcbc10bd737488cebb3510</filter>
+<group display_value="CMDB Admins" name="CMDB Admins">399a6c61db69e68038d070d9af961994</group>
+<health_window>7</health_window>
+<health_window_unit>days</health_window_unit>
+<last_run_date>2022-11-07 02:00:01</last_run_date>
+<name>VMI Instantiated Relationship Completeness</name>
+<next_scheduled_run>2022-11-14 02:00:00</next_scheduled_run>
+<number>AUD0001029</number>
+<offset/>
+<offset_type>0</offset_type>
+<prev_last_run_date>2022-10-31 01:00:00</prev_last_run_date>
+<run_as display_value="">bd309a6adbfc64d4f228f271399619c3</run_as>
+<run_as_tz/>
+<run_dayofmonth>1</run_dayofmonth>
+<run_dayofweek>7</run_dayofweek>
+<run_period/>
+<run_start>2021-05-24 15:58:59</run_start>
+<run_time>1970-01-02 02:00:00</run_time>
+<run_type>weekly</run_type>
+<script><![CDATA[(function() {
+    var desiredRegRels = 2; // Value to audit against - capture only 2 or more Instantiated By relation
+    var assignToUser = ''; 
+    var assignToGroup = '399a6c61db69e68038d070d9af961994'; // CMDBAdmins
+    var taskMsg = 'See the audit results below for the VMI relationship issues that must be addressed';
+    var desiredValue = "Only 1 relationship entry of the type(s)";
+
+    var grCert = new SNC.CertificationProcessing().getFilterRecords(current.filter);
+    var cnt = 0;
+    while (grCert.next()) {
+        var columnNameSpace = "";
+        var sysId = grCert.getValue('sys_id');
+        var strCount = "";
+        var relInstOf = new GlideRecord("cmdb_rel_ci");
+        relInstOf.addEncodedQuery("child=" + sysId + "^type=1bb40e370a0a0b323d85a1ce84f8feae"); // relationship type - Instantiated by
+        relInstOf.query();
+        var instOfRelCount = relInstOf.getRowCount();
+        if (instOfRelCount >= desiredRegRels) {
+            columnNameSpace += "Instantiated By"; // Updating the type of relationship failure
+            strCount += instOfRelCount;// + "|";
+        }
+        
+        if (instOfRelCount >= desiredRegRels) {
+            // Dont create duplicate FOTs for the Configuration Item
+            
+            var fotQuery = 'active=true^audit=9c4d705a1b3685d4fec0da03b24bcbd9^cmdb_ci=' + sysId + '^stateNOT IN3,4';
+            grFot = new GlideRecord('cert_follow_on_task');
+            grFot.addEncodedQuery(fotQuery);
+            grFot.query();
+            if (grFot.next()) {
+                new SNC.CertificationProcessing().logAuditResultFail(current.sys_id, sysId, grFot.sys_id, columnNameSpace, desiredValue, '', strCount, true);
+            } else {
+                var followOnTask = new SNC.CertificationProcessing().createFollowOnTask(current.sys_id, sysId, assignToUser, assignToGroup, taskMsg); // Create FOTs
+                new SNC.CertificationProcessing().logAuditResultFail(current.sys_id, sysId, followOnTask, columnNameSpace, desiredValue, '', strCount, true);
+            }
+            // Create audit result record
+        } else {
+            new SNC.CertificationProcessing().logAuditResultPass(current.sys_id, sysId, true); // Certified audit results
+        }
+
+        cnt++;
+
+    }
+    current.last_run_date = new GlideDateTime();
+    current.update();
+})();]]></script>
+<short_description>Audit to identify VMware VMIs having wrong relationship mapping (Instantiated by)</short_description>
+<stability_count>1</stability_count>
+<sys_class_name>cert_audit</sys_class_name>
+<sys_created_by>neelagantan.sankara</sys_created_by>
+<sys_created_on>2022-04-13 16:49:41</sys_created_on>
+<sys_customer_update>false</sys_customer_update>
+<sys_domain>global</sys_domain>
+<sys_id>9c4d705a1b3685d4fec0da03b24bcbd9</sys_id>
+<sys_mod_count>66</sys_mod_count>
+<sys_name>VMI Instantiated Relationship Completeness</sys_name>
+<sys_package display_value="Global" source="global">global</sys_package>
+<sys_policy/>
+<sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+<sys_scope display_value="Global">global</sys_scope>
+<sys_update_name>cert_audit_9c4d705a1b3685d4fec0da03b24bcbd9</sys_update_name>
+<sys_updated_by>system</sys_updated_by>
+<sys_updated_on>2022-11-07 02:00:01</sys_updated_on>
+<table>cmdb_ci_vmware_instance</table>
+<task_description>Remedy the discrepancies listed in the Audit Results below</task_description>
+<template display_value=""/>
+<threshold_count>5</threshold_count>
+<time_zone/>
+<u_audit_category>cmdb</u_audit_category>
+<u_reason/>
+<u_stop_remediation_tasks>false</u_stop_remediation_tasks>
+<upgrade_safe>false</upgrade_safe>
+<user display_value=""/>
+</cert_audit>
+</unload>

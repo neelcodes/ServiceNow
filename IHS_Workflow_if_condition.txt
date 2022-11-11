@@ -1,0 +1,13 @@
+// This script needs to set answer to 'yes' or 'no' to indicate the state of the activity.
+//
+// For example,
+ipReuse = workflow.scratchpad.ipReuse;
+answer = ifScript();
+//
+function ifScript() {
+    if (ipReuse == 'yes') {
+        return 'yes';
+    } else {
+        return 'no';
+    }
+}

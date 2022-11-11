@@ -1,0 +1,27 @@
+// This script needs to set answer to 'yes' or 'no' to indicate the state of the activity.
+//
+// For example,
+//
+answer = ifScript();
+
+function ifScript() {
+
+   var disc_status = workflow.scratchpad.status_id;
+	
+    try {
+        var disc_result = sn_discovery.DiscoveryAPI.reportCiIpAddressStatus(current.cmdb_ci.ip_address, disc_status);
+//gs.log(disc_result,"follow disc");
+        if (disc_result.getCiOperationStatus() == 'Processing') {
+			gs.log("Running","Disc_status");
+			return 'yes';
+			
+        } else {
+			//gs.log("notRunning","abcYes"); 
+            return 'no';
+        }
+    } catch (ex) {
+        return 'no';
+    }
+
+ }
+

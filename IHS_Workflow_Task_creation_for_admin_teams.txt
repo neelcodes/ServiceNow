@@ -1,0 +1,53 @@
+var cart = new sn_sc.CartJS();
+//var os_type= workflow.scratchpad.os_type ;
+var txt ='';
+var req_type='';
+if (workflow.scratchpad.os_type == 'Linux')
+	{
+		txt = 'The Discovery failed because the ssh credentials for ServiceNow Discovery failed on this server. If you need more info to resolve the issue, reach out to MK-CMDBSupport@ihsmarkit.com team';
+		req_type ='request_type_Linux';
+	}
+else
+	{
+		txt = 'The Discovery failed because the domain credentials for ServiceNow Discovery failed on this server. If you need more info to resolve the issue, reach out to MK-CMDBSupport@ihsmarkit.com team';
+		req_type ='request_type_windows';
+	}
+
+var request =
+{
+  'sysparm_id': '569e278adb691c50f228f2713996197e',
+  'sysparm_quantity': '1',
+  'variables':{
+    'os_type': workflow.scratchpad.os_type,
+	'short_description' : 'Credentials not working for ServiceNow Discovery(Automated_FOT)',
+	req_type:'Troubleshooting',
+	'host_names':current.cmdb_ci+"",
+	'problem_description':txt
+  }
+ };
+var cartDetails = cart.orderNow(request);
+
+var scReq = new GlideRecord('sc_request');
+scReq.get(cartDetails.sys_id);
+
+var grItm = new GlideRecord("sc_req_item");
+grItm.addQuery("request", scReq.sys_id);
+grItm.query();
+
+if (grItm.next()) {
+	grItm.short_description += " Automated_FOT";
+	grItm.update();
+	current.work_notes = "A request with CPDS team has been raised for the credentials issue: " + grItm.number;
+ 
+} 
+current.description = grItm.number;
+var grRitm = new GlideRecord('u_m2m_tasks_follow_on_tasks');
+grRitm.initialize(); 
+grRitm.u_follow_on_task = current.sys_id;
+grRitm.u_task = grItm.sys_id;
+grRitm.insert();
+
+//workflow.scratchpad.grItm.number = grItm.number;
+//current.work_notes = "Request with CPDS team has been riased : ";
+
+//gs.log(JSON.stringify(cartDetails));

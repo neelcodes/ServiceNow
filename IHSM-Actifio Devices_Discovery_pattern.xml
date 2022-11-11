@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2022-11-11 07:15:54">
+<sys_update_version action="INSERT_OR_UPDATE">
+<action>INSERT_OR_UPDATE</action>
+<application display_value="Global">global</application>
+<file_path/>
+<instance_id>0836d45e6f11bdc06626a9cc5d3ee461</instance_id>
+<instance_name>ihsprod</instance_name>
+<name>sa_pattern_4c71f02edb32e090f228f271399619d5</name>
+<payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sa_pattern"><sa_pattern action="INSERT_OR_UPDATE"><active>true</active><ci_type>u_cmdb_ci_virtual_appliance</ci_type><cpattern_type>3</cpattern_type><description/><directory>false</directory><enforce_proc_classy>false</enforce_proc_classy><has_draft>false</has_draft><invoke_per_account>false</invoke_per_account><metadata_id>4c71f02edb32e090f228f271399619d5</metadata_id><name>IHSM - Actifio Devices</name><ndl>pattern {&#13;
+	metadata {&#13;
+		id = "4c71f02edb32e090f228f271399619d5"&#13;
+		name = "IHSM - Actifio Devices"&#13;
+		description = "Discovering Actifio back up appliances"&#13;
+		citype = "u_cmdb_ci_virtual_appliance"&#13;
+	}&#13;
+	identification {&#13;
+		name = "discovery"&#13;
+		entry_point {type = "*"}&#13;
+		find_process_strategy {strategy = NONE}&#13;
+		step {&#13;
+			name = "SNMP Identify Library"&#13;
+			ref {refid = "c54f14e1db692200868a7c841f961941"}&#13;
+		}&#13;
+		step {&#13;
+			name = "Get name of appliance"&#13;
+			run_snmp_to_var {&#13;
+				snmp_object_ids = "1.3.6.1.2.1.1"&#13;
+				var_names = "sysname"&#13;
+				if_not_found_do = nop {}&#13;
+				cache_flag = 0&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Parse name"&#13;
+			parse_var_to_var {&#13;
+				from_var_name = "sysname"&#13;
+				to_var_names = "newname"&#13;
+				parsing_strategy = delimited_parsing {&#13;
+					delimiters = "."&#13;
+					selected_positions = 1&#13;
+				}&#13;
+				if_not_found_do = nop {}&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Set name of appliance"&#13;
+			if {&#13;
+				condition = is_not_empty {get_attr {"newname"}}&#13;
+				on_true = set_attr {&#13;
+					"u_cmdb_ci_virtual_appliance[*].name"&#13;
+					get_attr {"newname"}&#13;
+				}&#13;
+				on_false = nop {}&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Get Appliance version"&#13;
+			run_snmp_to_var {&#13;
+				snmp_object_ids = table {&#13;
+					name = "1.3.6.1.4.1.35795.2.2.2.1.1"&#13;
+					col_names = "3","2"&#13;
+				}&#13;
+				var_names = table {&#13;
+					name = "cdsVersionEntry"&#13;
+					col_names = "componentname","version"&#13;
+				}&#13;
+				if_not_found_do = nop {}&#13;
+				cache_flag = 0&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Filter Sky component version"&#13;
+			filter {&#13;
+				src_table_name = "cdsVersionEntry"&#13;
+				target_table_name = "cdsVersionEntry"&#13;
+				condition = contains {&#13;
+					get_attr {"cdsVersionEntry[].componentname"}&#13;
+					"Sky"&#13;
+				}&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Set Appliance version"&#13;
+			if {&#13;
+				condition = is_not_empty {get_attr {"cdsVersionEntry[1].version"}}&#13;
+				on_true = transform {&#13;
+					src_table_name = "cdsVersionEntry"&#13;
+					target_table_name = "u_cmdb_ci_virtual_appliance"&#13;
+					operation {set_field {&#13;
+							field_name = "os_version"&#13;
+							value = get_attr {"cdsVersionEntry[].version"}&#13;
+						}}&#13;
+				}&#13;
+				on_false = nop {}&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Fetch UUID"&#13;
+			run_snmp_to_var {&#13;
+				snmp_object_ids = "1.3.6.1.4.1.35795.2.2.11.2"&#13;
+				var_names = "tmp_serial"&#13;
+				if_not_found_do = nop {}&#13;
+				cache_flag = 0&#13;
+			}&#13;
+		}&#13;
+		step {&#13;
+			name = "Set UUID"&#13;
+			if {&#13;
+				condition = is_not_empty {get_attr {"tmp_serial"}}&#13;
+				on_true = set_attr {&#13;
+					"u_cmdb_ci_virtual_appliance[*].serial_number"&#13;
+					get_attr {"tmp_serial"}&#13;
+				}&#13;
+				on_false = nop {}&#13;
+			}&#13;
+		}&#13;
+	}&#13;
+}&#13;
+</ndl><parent/><serverless>false</serverless><source/><sync_to_mid>true</sync_to_mid><sys_class_name>sa_pattern</sys_class_name><sys_created_by>neelagantan.sankaran</sys_created_by><sys_created_on>2021-03-12 18:14:14</sys_created_on><sys_customer_update>false</sys_customer_update><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>4c71f02edb32e090f228f271399619d5</sys_id><sys_mod_count>45</sys_mod_count><sys_name>IHSM - Actifio Devices</sys_name><sys_overrides/><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_replace/><sys_replace_on_upgrade>false</sys_replace_on_upgrade><sys_scope display_value="Global">global</sys_scope><sys_update_name>sa_pattern_4c71f02edb32e090f228f271399619d5</sys_update_name><sys_updated_by>neelagantan.sankara</sys_updated_by><sys_updated_on>2021-10-12 15:39:01</sys_updated_on><version/></sa_pattern></record_update>]]></payload>
+<payload_hash>1643240638</payload_hash>
+<record_name>IHSM - Actifio Devices</record_name>
+<reverted_from display_value=""/>
+<source>7546937f8743f4989bfaa60e0ebb35ec</source>
+<source_table>sys_update_set</source_table>
+<state>current</state>
+<sys_created_by>John.Williams</sys_created_by>
+<sys_created_on>2021-10-14 09:53:48</sys_created_on>
+<sys_id>d74653ff8743f4989bfaa60e0ebb351f</sys_id>
+<sys_mod_count>0</sys_mod_count>
+<sys_recorded_at>17c7e38dcc60000001</sys_recorded_at>
+<sys_updated_by>John.Williams</sys_updated_by>
+<sys_updated_on>2021-10-14 09:53:48</sys_updated_on>
+<type>Discovery Patterns</type>
+<u_link>[code]&lt;a title="IHSM - Actifio Devices" class="linked" href="sa_pattern.do?sys_id=4c71f02edb32e090f228f271399619d5"&gt;IHSM - Actifio Devices&lt;/a&gt;[/code]</u_link>
+<update_guid>3c225e535807b490e9850a8bf22d3c90</update_guid>
+<update_guid_history>3c225e535807b490e9850a8bf22d3c90:1643240638,f69056536607b49040c6c0d2287a78ec:-1685585280,17c34d1f57c774901247fd752db3bd90:1643240638,4fda690769c3f090f3e153c0fa64c7b5:546476811,56c661cb5a83f090f65e2e3ee2d056c1:10574432,d6b4e9c39f83f090c8a3fad53fadaf6f:318886092,5834ad03de83f090bd5d1073f63dafba:-2129705969,92a3e58f7c43f09067230ffe585af99f:1674324491,8213ed8b9843f09078ab3b1f61818c57:-776157854,6fdf9583e043f090c424cee2f39e849f:-780870512,5a18fc0b7ecbb0904782326b9145a932:-1425884283,fc57740bffcbb0901bbe1e3ed8a77052:-2041212942,87e670c76ecbb090a0e234ba811c8244:1300355124,f40670870dcbb0900781fb9eb22d3e53:1118405167,9104b44306cbb0909c9fee5853942074:-433711616,8543f00341cbb090aa03f885f8035f58:-273443451,e050b40b5b8bb0902da509474a865e5d:-276364480,2f6aac8be74bb0904c1de90b7da2efb1:-1300896044,3e152003ef4bb09057f6490b83933e3a:-601938593,f0419c874547b0904d291dcd19270913:-273443451,42f0d047eb47b090558b513a388cef82:-2095495640,14a05047b147b090547ec610f68f5cd6:760014553,a85098c37947b0900f7cc9bca71d5fbd:-276364480,39afc003b847b09096216d8a5dbd0864:-1082985185,eebb083d8e473450ca2fe7a32d4c52f2:1877366124,878dc721374fbc10163ca367b2bda2d9:597188354,2a5d8fedef0fbc101f8328cb7d3bf559:-519204364,8bea0b29210fbc10c3a37db2ebb7bffd:-1679105642,1f4a0f65dd0fbc102745737e287209dc:-1096659099,380ffa2d8e8bbc10c0b2f772a6b0db8d:31794416,2ceef62d618bbc104e8404d5538bc576:1728074190,cc53bfd148873c10c5d90c53efe48e09:130479411,b0cfa759b0473c10dffef95601627da3:2087331617,d51fa319d2473c10a89d712bb4b9f109:340100,422ea7ddb3073c10e305ea4cf5d7941b:2087331617,668ca3d59c073c109b195b6c51463b4c:456074371,169b5b9115433c10ae93cec082c02aa8:-519204364,07269f113c033c104fb162619917f233:-1228242613,0ba9ee9d900bf810fa4b9d8dad7e3162:-741432985,ccbf8691eb07f8104ffeab2d0c7edcfb:1217437864,74f88a1165c3f810f4f9d31c1ba591af:-706676348,fa2f50f7b9b2b89434e023ef8e0a7787:760294517,ef81d8bb5dfe78944f91d894761b08ee:-2080739304,242ccc33aafe7894ff8a3b84f4cf90e1:-1045534024,d5751c33ae7ea4d079580c38f7620f8e:1368412074,9871b0224672e0906b978e67ef3cacf2:-647224868</update_guid_history>
+</sys_update_version>
+</unload>

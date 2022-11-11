@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2022-11-11 07:02:15">
+<sa_pattern_prepost_script action="INSERT_OR_UPDATE">
+<active>true</active>
+<execution_type>1</execution_type>
+<name>IHSM-Actifio appliance to VMI relation</name>
+<order>100</order>
+<pattern>4c71f02edb32e090f228f271399619d5</pattern>
+<script><![CDATA[var rtrn = {};
+
+//parsing the json string to a json object
+var payloadObj = JSON.parse(payload);
+
+// Create relationship between VM instance and Actifio appliance upon matching on the name
+if (payloadObj.hasOwnProperty('items')) {
+   
+
+    var nameofActifio = payloadObj.items[0].values.name;
+    var vmi = new GlideRecord("cmdb_ci_vm_instance");
+    vmi.addEncodedQuery("name=" + nameofActifio);     // match on the name of Actifio device
+    vmi.query();
+    if (vmi.next()) {
+        
+
+        var actifioAppliance = new GlideRecord("u_cmdb_ci_virtual_appliance");
+        actifioAppliance.addEncodedQuery("name=" + nameofActifio);
+        actifioAppliance.query();
+        if (actifioAppliance.next()) {
+            
+			actifioAppliance.virtual = true;         // mark appliance as virtual
+            var vmiRel = new GlideRecord("cmdb_rel_ci");
+            vmiRel.addEncodedQuery("parent=" + actifioAppliance.sys_id + "^child=" + vmi.sys_id + "^type=1bb40e370a0a0b323d85a1ce84f8feae");
+            vmiRel.query();
+            if (!vmiRel.hasNext()) {                 // Buidling relationship between VMI and Actifio when there is no existing rel
+
+                vmiRel.initialize();
+                vmiRel.parent = actifioAppliance.sys_id;
+                vmiRel.child = vmi.sys_id;
+                vmiRel.type = "1bb40e370a0a0b323d85a1ce84f8feae";
+                vmiRel.insert();
+                //gs.log(actifioAppliance.sys_id + " | " + vmi.sys_id, "AA_Actifio");
+				
+            }
+			var orgidtoApliance = new GlideRecord("cmdb_key_value");     // Fetch OrgID value from VMI and update the Actifio appliance
+			orgidtoApliance.addEncodedQuery("configuration_item="+vmi.sys_id+"^key=OrgID");
+			orgidtoApliance.query();
+			if (orgidtoApliance.next()){
+				
+				var orgGr = new GlideRecord("u_organisation");
+				orgGr.addEncodedQuery("u_organisationid="+orgidtoApliance.value);
+				orgGr.query();
+				if(orgGr.next()){
+					actifioAppliance.u_organization_id = orgGr.sys_id;
+					actifioAppliance.update();
+				}
+				
+			}
+		}
+    }
+}
+
+//you can return a message and a status, on top of the input variables that you MUST return.
+//returning the payload as a Json String is mandatory in case of a pre sensor script, and optional in case of post sensor script.
+//if you want to terminate the payload processing due to your business logic - you can set isSuccess to false.
+rtrn = {
+    'status': {
+        'message': 'Enter your message here' + JSON.stringify(payloadObj),
+        'isSuccess': true
+    },
+    'patternId': patternId,
+    'payload': JSON.stringify(payloadObj)
+};]]></script>
+<sys_class_name>sa_pattern_prepost_script</sys_class_name>
+<sys_created_by>neelagantan.sankara</sys_created_by>
+<sys_created_on>2021-09-29 13:04:01</sys_created_on>
+<sys_customer_update>false</sys_customer_update>
+<sys_domain>global</sys_domain>
+<sys_id>1d4f62c7db7af0947bc08e5c299619f5</sys_id>
+<sys_mod_count>26</sys_mod_count>
+<sys_name>IHSM-Actifio appliance to VMI relation</sys_name>
+<sys_overrides display_value=""/>
+<sys_package display_value="Global" source="global">global</sys_package>
+<sys_policy/>
+<sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+<sys_scope display_value="Global">global</sys_scope>
+<sys_update_name>sa_pattern_prepost_script_1d4f62c7db7af0947bc08e5c299619f5</sys_update_name>
+<sys_updated_by>neelagantan.sankara</sys_updated_by>
+<sys_updated_on>2021-10-07 16:11:26</sys_updated_on>
+<use_split_payload>false</use_split_payload>
+<when_to_exec>1</when_to_exec>
+</sa_pattern_prepost_script>
+</unload>

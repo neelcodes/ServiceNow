@@ -1,0 +1,17 @@
+var ip = current.cmdb_ci.ip_address; //ip address of CI in question
+var discRan = '';
+try {
+    var status_id = sn_discovery.DiscoveryAPI.discoverIpAddress(ip);
+    var disc_url = gs.getProperty('glide.servlet.uri') + gs.generateURL('discovery_status', status_id);
+    current.work_notes = "Discovery started...Refer below URL for the discovery status: \n\n" + disc_url;
+    discRan = 'yes';
+} catch (ex) {
+
+    current.work_notes = "Discovery failed to start due to following reason: \n \n" + ex.message;
+    discRan = 'no';
+    //current.state = 2;
+    current.u_team_responsible = "MID not found";
+}
+
+workflow.scratchpad.status_id = status_id;
+workflow.scratchpad.discRan = discRan;

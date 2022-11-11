@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2022-11-11 07:18:07">
+<sa_pattern_prepost_script action="INSERT_OR_UPDATE">
+<active>true</active>
+<execution_type>1</execution_type>
+<name>IHSM -  Environment Parsing</name>
+<order>120</order>
+<pattern>670e55a4db702200c06776231f961942,1d2810b14fa12200609b92918110c7a7</pattern>
+<script><![CDATA[/*
+*  1. Pre sensor:  You can change payload before it will be proccesed by Identification Engine.
+*	  Use IEJsonUtility in order to add relevant information to the payload
+*     Input parameters in Pre sensor mode: payload, patternId
+*  2. Post sensor: You can update/add missing info to the DB based on result (Json) from
+*     Identification Engine
+*     Output parameters in Post sensor mode: payload
+*
+*/
+var rtrn = {};
+
+//parsing the json string to a json object
+var payloadObj = JSON.parse(payload);
+
+//put your business logic here
+var parseENV = function(){
+	gs.log("###########  ServerOS-PPP INPUT payload = "+ JSON.stringify(payloadObj));
+	var envir = "";
+	var rawEnv = "";
+	var curName = "";
+	var curEnv = "";
+	var payloadItems = payloadObj.items;
+	for (var i = 0; i< payloadItems.length; i++){
+		if (payloadItems[i].className == 'cmdb_ci_win_server' || 'cmdb_ci_linux_server'){
+			var currentItem = payloadItems[i];
+			rawEnv = currentItem.values.used_for+"";
+			curName = currentItem.values.name+"";
+			gs.log("++++ServerOS-PPP+++ curName = " + curName );
+			var gr = new GlideRecord("cmdb_ci_server");
+				gr.addQuery("name", curName);
+				gr.query();
+				gr.next();
+				curEnv = gr.used_for;
+			gs.log("++++ServerOS-PPP+++ after gr curEnv = " + curEnv);
+		
+			rawEnv=rawEnv.toLowerCase();
+			gs.log("###########  ServerOS-PPP rawEnv = "+ rawEnv);
+			switch(rawEnv){
+				case "pd":
+				case "prod":
+				case "production":
+				case "p2":
+				case "prd":
+				case "pr":
+				case "p":
+				case "in":
+				case "ra":
+					envir="Production";
+					break;
+				case "qa":
+				case "q2":
+				case "q":
+					envir="QA";
+					break;
+				case "ut":
+				case "uat":
+				case "u":
+					envir="UT";
+					break;
+				case "dv":
+				case "dev":
+				case "development":
+				case "d2":
+				case "d":
+				case "np":
+					envir="Development";
+					break;
+				case "stage":
+				case "staging":
+				case "st":
+				case "s":
+					envir="Staging";
+					break;					
+				case "lb":
+					envir="LB";
+					break;
+				case "iv":
+					envir="IV";
+					break;
+				case "pc":
+					envir="PC";
+					break;
+				case "test":
+				case "tst":
+				case "ts":
+					envir="Test";
+					break;
+				case "dr":
+					envir="DR";
+					break;
+				default:
+					envir= curEnv;
+				}
+				
+			currentItem.values.used_for = envir+"";
+		}
+	}
+};
+parseENV();
+//you can return a message and a status, on top of the input variables that you MUST return.
+//returning the payload as a Json String is mandatory in case of a pre sensor script, and optional in case of post sensor script.
+//if you want to terminate the payload processing due to your business logic - you can set isSucess to false.
+rtrn = {'status':{
+				'message':'Updated environment'  + JSON.stringify(payloadObj),
+				'isSuccess':true
+				},
+		'patternId':patternId,
+		'payload':JSON.stringify(payloadObj)
+};]]></script>
+<sys_class_name>sa_pattern_prepost_script</sys_class_name>
+<sys_created_by>John.Williams</sys_created_by>
+<sys_created_on>2021-05-12 09:55:00</sys_created_on>
+<sys_customer_update>false</sys_customer_update>
+<sys_domain>global</sys_domain>
+<sys_id>d808810a878cfc10bd737488cebb3544</sys_id>
+<sys_mod_count>40</sys_mod_count>
+<sys_name>IHSM -  Environment Parsing</sys_name>
+<sys_overrides display_value=""/>
+<sys_package display_value="Global" source="global">global</sys_package>
+<sys_policy/>
+<sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+<sys_scope display_value="Global">global</sys_scope>
+<sys_update_name>sa_pattern_prepost_script_d808810a878cfc10bd737488cebb3544</sys_update_name>
+<sys_updated_by>abhinab.acharyya</sys_updated_by>
+<sys_updated_on>2022-09-06 14:01:07</sys_updated_on>
+<use_split_payload>false</use_split_payload>
+<when_to_exec>1</when_to_exec>
+</sa_pattern_prepost_script>
+</unload>

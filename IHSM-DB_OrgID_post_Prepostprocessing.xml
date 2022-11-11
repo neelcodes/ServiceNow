@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2022-11-11 07:17:19">
+<sa_pattern_prepost_script action="INSERT_OR_UPDATE">
+<active>true</active>
+<execution_type>1</execution_type>
+<name>IHSM - DB OrgID post</name>
+<order>100</order>
+<pattern>28d607dbfead4be3887c843814455500,28d607dbfead4be3887c843814455105,79507e6e1b93cd140e203333cc4bcbfc</pattern>
+<script><![CDATA[/*
+ *  1. Pre sensor:  You can change payload before it will be proccesed by Identification Engine.
+ *	  Use IEJsonUtility in order to add relevant information to the payload
+ *     Input parameters in Pre sensor mode: payload, patternId
+ *  2. Post sensor: You can update/add missing info to the DB based on result (Json) from
+ *     Identification Engine
+ *     Output parameters in Post sensor mode: payload
+ *
+ */
+var rtrn = {};
+
+//parsing the json string to a json object
+var payloadObj = JSON.parse(payload);
+
+//put your business logic here
+var getOrgIdSysId = function() {
+    var orgid = '';
+    var payloadItems = payloadObj.items;
+    for (var i = 0; i < payloadItems.length; i++) {
+        if (payloadItems[i].className === 'cmdb_ci_db_ora_instance' || payloadItems[i].className === 'cmdb_ci_db_mssql_instance' ) {
+            var currentItem = payloadItems[i];
+            orgid = currentItem.values.u_organization_id+"";
+            var gr = new GlideRecord('u_organisation');
+            if (gr.get('u_organisationid', orgid)) {
+                currentItem.values.u_organization_id = gr.sys_id+"";
+            }
+        }
+    }
+};
+getOrgIdSysId();
+
+//you can return a message and a status, on top of the input variables that you MUST return.
+//returning the payload as a Json String is mandatory in case of a pre sensor script, and optional in case of post sensor script.
+//if you want to terminate the payload processing due to your business logic - you can set isSucess to false.
+rtrn = {
+    'status': {
+        'message': 'OrgID outgoing payload ' + JSON.stringify(payloadObj),
+        'isSuccess': true
+    },
+    'patternId': patternId,
+    'payload': JSON.stringify(payloadObj)
+};]]></script>
+<sys_class_name>sa_pattern_prepost_script</sys_class_name>
+<sys_created_by>John.Williams@ihsmarkit.com</sys_created_by>
+<sys_created_on>2021-04-12 08:59:33</sys_created_on>
+<sys_customer_update>false</sys_customer_update>
+<sys_domain>global</sys_domain>
+<sys_id>82071a1c1b2bac1093eaa607ec4bcb6d</sys_id>
+<sys_mod_count>12</sys_mod_count>
+<sys_name>IHSM - DB OrgID post</sys_name>
+<sys_overrides display_value=""/>
+<sys_package display_value="Global" source="global">global</sys_package>
+<sys_policy/>
+<sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+<sys_scope display_value="Global">global</sys_scope>
+<sys_update_name>sa_pattern_prepost_script_82071a1c1b2bac1093eaa607ec4bcb6d</sys_update_name>
+<sys_updated_by>John.Williams</sys_updated_by>
+<sys_updated_on>2022-06-27 14:42:58</sys_updated_on>
+<use_split_payload>false</use_split_payload>
+<when_to_exec>1</when_to_exec>
+</sa_pattern_prepost_script>
+</unload>

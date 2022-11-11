@@ -1,0 +1,27 @@
+// This script needs to set answer to 'yes' or 'no' to indicate the state of the activity.
+//
+// For example,
+//
+var certAudit = new GlideRecord('cert_audit');
+certAudit.addEncodedQuery('audit_type=desired_state^name=Server Staleness');
+certAudit.query();
+while(certAudit.next()){
+	var stopFlag = certAudit.u_stop_remediation_tasks;
+}
+answer = ifScript();
+
+  function ifScript() {
+     if (workflow.scratchpad.disc_issue && !stopFlag) {
+		return 'yes';
+		
+     }
+	else if (workflow.scratchpad.disc_issue && stopFlag){
+	current.work_notes = "****************** Creation of remediation task for CPDS is TEMPORARILY SUSPENDED due to below reason ******************\n\n\n"+ certAudit.u_reason+ "\n\n\n************************************************************************************************************************";
+     return 'no';
+	}
+	else{
+	
+		return 'no';
+		
+	}
+  }

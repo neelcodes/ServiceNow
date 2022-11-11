@@ -1,0 +1,61 @@
+var disc_status = workflow.scratchpad.status_id;
+workflow.scratchpad.disc_issue = false;
+workflow.scratchpad.os_type = "";
+
+
+try {
+    var disc_result = sn_discovery.DiscoveryAPI.reportCiIpAddressStatus(current.cmdb_ci.ip_address, disc_status);
+
+    if (disc_result.getCiOperationStatus() == 'Successful') {
+        current.work_notes = " The Discovery completed successfully and hence the task is being closed";
+        current.state = 3;
+        current.u_team_responsible = 'Discovery successful';
+    } else if (disc_result.getCiOperationStatus() == 'NotSuccessful') {
+        if (!disc_result.getIssuesLink()) {
+            current.work_notes = "Issue details link is unavailable for this device. Please refer discovery logs for more information";
+        } else {
+            current.work_notes = "Details of the error during the failed Discovery is available below: \n \n" + disc_result.getIssuesLink(); 
+        }
+        //to be addressed by CMDB admins 
+        var logQuer = 'status=' + disc_status + '^level!=0^ORlevel=NULL';
+        var gr = new GlideRecord('discovery_log');
+        gr.addEncodedQuery(logQuer);
+        gr.query();
+        //var err_msg = gr.short_message.toLowerCase();
+        while (gr.next()) {
+            var err_msg = gr.short_message.toLowerCase();
+            if (err_msg.indexOf("no valid credential") > -1 && err_msg.indexOf("[ssh password,ssh private key]") > -1) {
+                workflow.scratchpad.os_type = "Linux";
+                workflow.scratchpad.disc_issue = true;
+                current.u_team_responsible = 'Linux Credentials';
+                current.state = 2;
+                current.work_notes = "The Discovery failed because the ssh credentials for ServiceNow Discovery failed on this server";
+
+            } else if ( (err_msg.indexOf("failure(s)") > -1 || err_msg.indexOf("authentication failure(s)") > -1 || err_msg.indexOf("failure(s) with available windows credentials") > -1 && err_msg.indexOf("available windows credentials") > -1 ) || (err_msg.indexOf("adding target to blacklist") > -1 && err_msg.indexOf("no valid credential found for type [windows]" > -1 ))) {
+                workflow.scratchpad.os_type = "Windows";
+                workflow.scratchpad.disc_issue = true;
+                current.u_team_responsible = 'Windows Credentials';
+                current.state = 2;
+                current.work_notes = "The Discovery failed because the domain credentials for ServiceNow Discovery failed on this server";
+
+            }
+        }
+    }
+
+} catch (ex) {
+
+    var discLog = 'status=' + disc_status + '^level=1^ORlevel=2';
+    var errDisc = new GlideRecord('discovery_log');
+    errDisc.addEncodedQuery(discLog);
+    errDisc.query();
+    while (errDisc.next()) {
+        var errMsg = errDisc.short_message.toLowerCase();
+        current.work_notes = "Discovery failed with following message: \n \n" + errDisc.short_message;
+        if (errMsg.indexOf("is not a reachable host") > -1 || errMsg.indexOf.indexOf("no response to target ports") > -1) {
+            current.u_team_responsible = 'Not Reachable';
+        }
+
+    }
+
+
+}
